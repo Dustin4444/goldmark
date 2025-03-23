@@ -1,4 +1,3 @@
-// Package parser contains stuff that are related to parsing a Markdown text.
 package parser
 
 import (
@@ -1086,7 +1085,7 @@ func (p *parser) parseBlocks(parent ast.Node, reader text.Reader, pc Context) {
 					reader.AdvanceLine()
 					return
 				}
-				lineNum, _ := reader.Position()
+				lineNum, _ = reader.Position()
 				blankLines = append(blankLines, lineStat{lineNum, i, util.IsBlank(line)})
 				// If node is a paragraph, p.openBlocks determines whether it is continuable.
 				// So we do not process paragraphs here.

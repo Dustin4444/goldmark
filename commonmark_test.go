@@ -55,3 +55,54 @@ func TestSpec(t *testing.T) {
 	))
 	testutil.DoTestCases(markdown, cases, t)
 }
+
+func TestSpec_EdgeCases(t *testing.T) {
+	edgeCases := []testutil.MarkdownTestCase{
+		{
+			No:       1,
+			Markdown: "This is a [link](http://example.com) with a URL.",
+			Expected: "<p>This is a <a href=\"http://example.com\">link</a> with a URL.</p>\n",
+		},
+		{
+			No:       2,
+			Markdown: "This is a [link](http://example.com) with a URL and a title.",
+			Expected: "<p>This is a <a href=\"http://example.com\" title=\"Example\">link</a> with a URL and a title.</p>\n",
+		},
+		{
+			No:       3,
+			Markdown: "This is a [link](http://example.com) with a URL and an ID.",
+			Expected: "<p>This is a <a href=\"http://example.com\" id=\"example\">link</a> with a URL and an ID.</p>\n",
+		},
+		{
+			No:       4,
+			Markdown: "This is a [link](http://example.com) with a URL, a title, and an ID.",
+			Expected: "<p>This is a <a href=\"http://example.com\" title=\"Example\" id=\"example\">link</a> with a URL, a title, and an ID.</p>\n",
+		},
+		{
+			No:       5,
+			Markdown: "This is a [link](http://example.com) with a URL and a class.",
+			Expected: "<p>This is a <a href=\"http://example.com\" class=\"example\">link</a> with a URL and a class.</p>\n",
+		},
+		{
+			No:       6,
+			Markdown: "This is a [link](http://example.com) with a URL, a title, and a class.",
+			Expected: "<p>This is a <a href=\"http://example.com\" title=\"Example\" class=\"example\">link</a> with a URL, a title, and a class.</p>\n",
+		},
+		{
+			No:       7,
+			Markdown: "This is a [link](http://example.com) with a URL, an ID, and a class.",
+			Expected: "<p>This is a <a href=\"http://example.com\" id=\"example\" class=\"example\">link</a> with a URL, an ID, and a class.</p>\n",
+		},
+		{
+			No:       8,
+			Markdown: "This is a [link](http://example.com) with a URL, a title, an ID, and a class.",
+			Expected: "<p>This is a <a href=\"http://example.com\" title=\"Example\" id=\"example\" class=\"example\">link</a> with a URL, a title, an ID, and a class.</p>\n",
+		},
+	}
+
+	markdown := New(WithRendererOptions(
+		html.WithXHTML(),
+		html.WithUnsafe(),
+	))
+	testutil.DoTestCases(markdown, edgeCases, t)
+}

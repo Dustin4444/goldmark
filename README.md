@@ -566,3 +566,121 @@ MIT
 Author
 --------------------
 Yusuke Inuzuka
+
+Examples and Use Cases
+----------------------
+Here are some additional examples and use cases for using goldmark:
+
+### Example: Custom Parser for Mentions
+
+You can create a custom parser to handle `@username` mentions in your Markdown text. Here's an example:
+
+```go
+package main
+
+import (
+    "bytes"
+    "fmt"
+    "github.com/yuin/goldmark"
+    "github.com/yuin/goldmark/ast"
+    "github.com/yuin/goldmark/parser"
+    "github.com/yuin/goldmark/text"
+    "github.com/yuin/goldmark/util"
+)
+
+type mentionParser struct{}
+
+func (p *mentionParser) Trigger() []byte {
+    return []byte{'@'}
+}
+
+func (p *mentionParser) Parse(parent ast.Node, block text.Reader, pc parser.Context) ast.Node {
+    line, segment := block.PeekLine()
+    if len(line) < 2 || line[0] != '@' {
+        return nil
+    }
+    end := 1
+    for end < len(line) && util.IsAlphaNumeric(line[end]) {
+        end++
+    }
+    if end == 1 {
+        return nil
+    }
+    mention := string(line[1:end])
+    block.Advance(end)
+    return ast.NewString([]byte(fmt.Sprintf("<a href=\"/user/%s\">@%s</a>", mention, mention)))
+}
+
+func main() {
+    md := goldmark.New(
+        goldmark.WithParserOptions(
+            parser.WithInlineParsers(
+                util.Prioritized(&mentionParser{}, 500),
+            ),
+        ),
+    )
+    var buf bytes.Buffer
+    source := []byte("Hello @username!")
+    if err := md.Convert(source, &buf); err != nil {
+        panic(err)
+    }
+    fmt.Println(buf.String())
+}
+```
+
+### Example: Custom Renderer for Mentions
+
+You can also create a custom renderer to handle `@username` mentions in your Markdown text. Here's an example:
+
+```go
+package main
+
+import (
+    "bytes"
+    "fmt"
+    "github.com/yuin/goldmark"
+    "github.com/yuin/goldmark/ast"
+    "github.com/yuin/goldmark/parser"
+    "github.com/yuin/goldmark/renderer"
+    "github.com/yuin/goldmark/renderer/html"
+    "github.com/yuin/goldmark/util"
+)
+
+type mentionRenderer struct{}
+
+func (r *mentionRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+    reg.Register(ast.KindString, r.renderMention)
+}
+
+func (r *mentionRenderer) renderMention(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+    if entering {
+        mention := string(node.Text(source))
+        fmt.Fprintf(w, "<a href=\"/user/%s\">%s</a>", mention[1:], mention)
+    }
+    return ast.WalkContinue, nil
+}
+
+func main() {
+    md := goldmark.New(
+        goldmark.WithRendererOptions(
+            html.WithNodeRenderers(
+                util.Prioritized(&mentionRenderer{}, 500),
+            ),
+        ),
+    )
+    var buf bytes.Buffer
+    source := []byte("Hello @username!")
+    if err := md.Convert(source, &buf); err != nil {
+        panic(err)
+    }
+    fmt.Println(buf.String())
+}
+```
+
+### Use Case: Extending goldmark with Custom Parsers and Renderers
+
+By creating custom parsers and renderers, you can extend goldmark to support additional Markdown syntax and rendering options. This allows you to tailor the library to your specific needs and use cases.
+
+For example, you can create custom parsers for handling hashtags, custom URL schemes, or even custom Markdown syntax for specific applications. Similarly, you can create custom renderers to generate HTML, LaTeX, or other output formats based on your custom syntax.
+
+By leveraging the extensibility of goldmark, you can build powerful and flexible Markdown processing solutions that meet your unique requirements.
